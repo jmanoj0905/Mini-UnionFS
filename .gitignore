@@ -22,5 +22,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Claude files
 CLAUDE.md
 .claude/
+
+# Project docs (internal only)
+UnionFS project.pdf
