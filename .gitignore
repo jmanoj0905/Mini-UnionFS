@@ -1,0 +1,26 @@
+# Build output
+mini_unionfs
+*.o
+*.a
+*.so
+
+# Test environment (created by test_unionfs.sh)
+unionfs_test_env/
+
+# FUSE mount artifacts
+*.fuse_hidden*
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+CLAUDE.md
+.claude/
