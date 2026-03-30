@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
      * -f = foreground mode (keeps stderr visible for debugging).
      * Remove -f for production / daemonized use.
      */
-    char *fuse_argv[] = { argv[0], argv[3], "-f", NULL };
-    int fuse_argc = 3;
+    char *fuse_argv[] = { argv[0], argv[3], NULL };
+    int fuse_argc = 2;
 
     int ret = fuse_main(fuse_argc, fuse_argv, &unionfs_oper, state);
 
