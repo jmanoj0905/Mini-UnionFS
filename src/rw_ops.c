@@ -118,6 +118,24 @@ int unionfs_create(const char *path, mode_t mode, struct fuse_file_info *fi) {
     snprintf(upper, MAX_PATH_LEN, "%s%s", data->upper_dir, path);
     if (make_parent_dirs(upper) < 0) return -errno;
 
+    /* Clear stale whiteout marker so the re-created file becomes visible */
+    char wh_path[MAX_PATH_LEN];
+    const char *basename = strrchr(path, '/');
+    basename = basename ? basename + 1 : path;
+    char dir_part[MAX_PATH_LEN];
+    strncpy(dir_part, path, MAX_PATH_LEN);
+    char *last_slash = strrchr(dir_part, '/');
+    if (last_slash && last_slash != dir_part) {
+        *last_slash = '\0';
+        snprintf(wh_path, MAX_PATH_LEN, "%s%s/" WH_PREFIX "%s",
+                 data->upper_dir, dir_part, basename);
+    } else {
+        snprintf(wh_path, MAX_PATH_LEN, "%s/" WH_PREFIX "%s",
+                 data->upper_dir, basename);
+    }
+    if (access(wh_path, F_OK) == 0)
+        unlink(wh_path);
+
     int fd = open(upper, O_CREAT | O_WRONLY | O_TRUNC, mode);
     if (fd == -1) return -errno;
 
