@@ -52,7 +52,7 @@ make clean
 ./mini_unionfs <lower_dir> <upper_dir> <mount_dir>
 ```
 
-All three directories must already exist. The binary runs in the foreground (`-f` flag) so you can see debug output. Example:
+All three directories must already exist. Example:
 
 ```bash
 mkdir -p /tmp/lower /tmp/upper /tmp/mount
@@ -65,9 +65,9 @@ echo "base data"   > /tmp/lower/data.txt
 ./mini_unionfs /tmp/lower /tmp/upper /tmp/mount
 
 # In another terminal:
-cat /tmp/mount/config.txt      # reads from lower
-echo "modified" > /tmp/mount/config.txt  # CoW: copies to upper, writes there
-rm /tmp/mount/data.txt         # creates /tmp/upper/.wh.data.txt
+cat /tmp/mount/config.txt               # reads from lower
+echo "modified" > /tmp/mount/config.txt # CoW: copies to upper, writes there
+rm /tmp/mount/data.txt                  # creates /tmp/upper/.wh.data.txt
 ```
 
 To unmount:
@@ -78,14 +78,27 @@ fusermount3 -u /tmp/mount
 
 ## Testing
 
+All tests live in the `testing/` directory. Run the full suite with:
+
 ```bash
-bash test_unionfs.sh
+bash testing/run_all_tests.sh
 ```
 
-The test suite validates three scenarios:
-1. **Layer visibility** — files in lower_dir appear through the mount
-2. **Copy-on-Write** — writing to a lower file copies it to upper; lower stays unchanged
-3. **Whiteout deletion** — deleting a lower file creates `.wh.<name>` in upper; file disappears from mount
+The suite mounts and unmounts the filesystem for each test in an isolated temporary directory, then cleans up. Each test prints `[PASS]` / `[FAIL]` per assertion and a per-script result.
+
+### Test cases
+
+| # | File | What it covers |
+|---|------|----------------|
+| 01 | `test_01_layer_visibility.sh` | Files from lower and upper visible through mount; upper shadows lower for same filename |
+| 02 | `test_02_cow_write.sh` | Copy-on-Write on write, append, overwrite, and truncate; lower layer never modified |
+| 03 | `test_03_whiteout.sh` | Deleting a lower file creates `.wh.` marker; deleting an upper-only file does not |
+| 04 | `test_04_readdir_merge.sh` | Directory listing merges both layers, deduplicates, hides whiteout markers |
+| 05 | `test_05_create_new_file.sh` | New files created through mount land in upper only |
+| 06 | `test_06_nested_paths.sh` | Subdirectory visibility, CoW, and whiteout for nested paths |
+| 07 | `test_07_directory_ops.sh` | `mkdir` goes to upper; `rmdir` upper-only succeeds; `rmdir` lower-only returns EPERM |
+| 08 | `test_08_recreate_after_whiteout.sh` | Re-creating a deleted file clears the stale whiteout marker |
+| 09 | `test_09_negative_cases.sh` | ENOENT on missing and whited-out paths; empty file reads; missing parent dir writes |
 
 ## Project Structure
 
@@ -98,11 +111,20 @@ The test suite validates three scenarios:
 │   ├── path.c         # Path resolution, getattr, readdir, read
 │   ├── rw_ops.c       # Write path: open, write, create, truncate, CoW engine
 │   └── del_ops.c      # Deletion: unlink, mkdir, rmdir + dispatch table
-├── test_unionfs.sh    # Automated test suite
-└── design_doc.md      # Design document (architecture & edge cases)
+├── testing/
+│   ├── run_all_tests.sh   # Test suite runner
+│   ├── lib.sh             # Shared test utilities (setup, assertions, mount helpers)
+│   ├── test_01_layer_visibility.sh
+│   ├── test_02_cow_write.sh
+│   ├── test_03_whiteout.sh
+│   ├── test_04_readdir_merge.sh
+│   ├── test_05_create_new_file.sh
+│   ├── test_06_nested_paths.sh
+│   ├── test_07_directory_ops.sh
+│   ├── test_08_recreate_after_whiteout.sh
+│   └── test_09_negative_cases.sh
+│   └── test_unionfs.sh    # Original 3-scenario test
 ```
-
-The codebase is split so each source file can be developed independently and merged without conflicts.
 
 ## Architecture
 
@@ -111,7 +133,8 @@ The FUSE operations dispatch table (`struct fuse_operations`) lives in `del_ops.
 Key design decisions:
 - `readdir` does a two-pass merge (upper first, then lower) with a seen-set to deduplicate entries and suppress whiteout targets
 - Open-mode detection uses `(fi->flags & O_ACCMODE) != O_RDONLY` to correctly catch both `O_WRONLY` and `O_RDWR` (since `O_RDONLY == 0`, a naive bitwise AND fails)
-- CoW copies preserve the full directory tree in upper before writing
+- CoW copies preserve the full directory tree in upper before writing, using a 64 KB buffer loop for large files
+- `unionfs_create` clears any stale whiteout marker before creating a new file, matching the behaviour of `unionfs_mkdir`
 - Whiteout markers follow the `.wh.<filename>` convention used by Docker's overlay driver
 
 ## License
