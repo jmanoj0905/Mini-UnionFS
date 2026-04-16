@@ -16,9 +16,12 @@ SRCS     = $(SRCDIR)/main.c $(SRCDIR)/path.c $(SRCDIR)/rw_ops.c $(SRCDIR)/del_op
 OBJS     = $(SRCS:.c=.o)
 TARGET   = mini_unionfs
 
-.PHONY: all clean
+.PHONY: all clean run
 
 all: $(TARGET)
+
+run: $(TARGET)
+	./unionfs_cli.sh
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
