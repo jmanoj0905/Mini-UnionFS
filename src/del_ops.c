@@ -143,6 +143,13 @@ int unionfs_chown(const char *path, uid_t uid, gid_t gid, struct fuse_file_info 
     return 0;
 }
 
+static int unionfs_statfs(const char *path, struct statvfs *stbuf) {
+    (void) path;
+    if (statvfs(UNIONFS_DATA->upper_dir, stbuf) == -1)
+        return -errno;
+    return 0;
+}
+
 /* 3.6 — FUSE Dispatch Table */
 struct fuse_operations unionfs_oper = {
     .getattr    = unionfs_getattr,
@@ -159,4 +166,5 @@ struct fuse_operations unionfs_oper = {
     .rmdir      = unionfs_rmdir,
     .chmod      = unionfs_chmod,
     .chown      = unionfs_chown,
+    .statfs     = unionfs_statfs,
 };
