@@ -4,8 +4,6 @@ mini_unionfs
 *.a
 *.so
 
-# Test environment (created by test_unionfs.sh)
-unionfs_test_env/
 
 # FUSE mount artifacts
 *.fuse_hidden*
