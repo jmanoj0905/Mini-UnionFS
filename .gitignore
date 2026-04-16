@@ -1,8 +1,6 @@
-# Build output
-mini_unionfs
-*.o
-*.a
-*.so
+# Test environment
+unionfs_test_env/upper/
+unionfs_test_env/mnt/
 
 
 # FUSE mount artifacts
