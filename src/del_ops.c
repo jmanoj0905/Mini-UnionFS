@@ -150,6 +150,40 @@ static int unionfs_statfs(const char *path, struct statvfs *stbuf) {
     return 0;
 }
 
+int unionfs_symlink(const char *target, const char *linkpath) {
+    struct mini_unionfs_state *data = UNIONFS_DATA;
+    char upper_link[MAX_PATH_LEN];
+
+    snprintf(upper_link, MAX_PATH_LEN, "%s%s", data->upper_dir, linkpath);
+    if (make_parent_dirs(upper_link) < 0) return -errno;
+    if (symlink(target, upper_link) == -1) return -errno;
+    return 0;
+}
+
+int unionfs_readlink(const char *path, char *buf, size_t size) {
+    struct mini_unionfs_state *data = UNIONFS_DATA;
+    char upper[MAX_PATH_LEN], lower[MAX_PATH_LEN];
+    char linkbuf[MAX_PATH_LEN];
+    ssize_t len;
+
+    snprintf(upper, MAX_PATH_LEN, "%s%s", data->upper_dir, path);
+    snprintf(lower, MAX_PATH_LEN, "%s%s", data->lower_dir, path);
+
+    if (access(upper, F_OK) == 0) {
+        len = readlink(upper, linkbuf, size - 1);
+    } else if (access(lower, F_OK) == 0) {
+        len = readlink(lower, linkbuf, size - 1);
+    } else {
+        return -ENOENT;
+    }
+
+    if (len == -1) return -errno;
+    linkbuf[len] = '\0';
+    strncpy(buf, linkbuf, size - 1);
+    buf[size - 1] = '\0';
+    return 0;
+}
+
 /* 3.6 — FUSE Dispatch Table */
 struct fuse_operations unionfs_oper = {
     .getattr    = unionfs_getattr,
@@ -167,4 +201,6 @@ struct fuse_operations unionfs_oper = {
     .chmod      = unionfs_chmod,
     .chown      = unionfs_chown,
     .statfs     = unionfs_statfs,
+    .symlink    = unionfs_symlink,
+    .readlink   = unionfs_readlink,
 };
