@@ -76,6 +76,74 @@ To unmount:
 fusermount3 -u /tmp/mount
 ```
 
+## Interactive CLI
+
+`unionfs_cli.sh` is an interactive shell for manually exploring and testing the filesystem. It creates the test environment, mounts the FS, and drops you into a REPL where every command runs inside `mnt/`.
+
+```bash
+./unionfs_cli.sh
+```
+
+### Test environment layout
+
+```
+unionfs_test_env/
+├── lower/    read-only base layer  (seeded with sample files on startup)
+├── upper/    writable CoW layer    (empty on startup; writes land here)
+└── mnt/      FUSE mount point      (merged view of lower + upper)
+```
+
+### Built-in commands
+
+| Command | Description |
+|---------|-------------|
+| `cd [dir]` | Change directory inside `mnt/` — bare `cd` returns to root |
+| `pwd` | Print current path relative to `mnt/` |
+| `layers` | Show files in all three layers side-by-side; highlights whiteout entries |
+| `setup` / `reset` | Wipe and reseed layers, remount the FS |
+| `mount` | Mount without resetting layer data |
+| `umount` | Unmount `mnt/` |
+| `help` | Show usage and example commands |
+| `exit` / `quit` | Unmount and exit |
+
+All other input runs as a Linux command with CWD set to the current directory inside `mnt/`. The prompt updates as you navigate:
+
+```
+unionfs:mnt/$ cd subdir
+unionfs:mnt/subdir$ ls
+unionfs:mnt/subdir$ cd ..
+unionfs:mnt/$
+```
+
+### Example test session
+
+```bash
+# Test 1 — layer visibility
+ls -la
+
+# Test 2 — Copy-on-Write
+echo "new line" >> base.txt       # triggers CoW copy to upper/
+layers                             # base.txt appears in upper/, lower/ unchanged
+
+# Test 3 — Whiteout
+rm delete_me.txt                  # creates upper/.wh.delete_me.txt
+ls delete_me.txt                  # No such file
+
+# Test 5 — New file in upper
+touch newfile.txt
+layers                             # newfile.txt only in upper/
+
+# Test 6/7 — Nested paths and directory ops
+mkdir newdir
+cd newdir
+echo "hello" > hello.txt
+ls
+cd ..
+
+# Inspect all three layers at any point
+layers
+```
+
 ## Testing
 
 All tests live in the `testing/` directory. Run the full suite with:
@@ -105,6 +173,11 @@ The suite mounts and unmounts the filesystem for each test in an isolated tempor
 ```
 .
 ├── Makefile
+├── unionfs_cli.sh             # Interactive CLI for manual testing
+├── unionfs_test_env/          # CLI test environment (created by unionfs_cli.sh)
+│   ├── lower/                 #   read-only base layer
+│   ├── upper/                 #   writable CoW layer
+│   └── mnt/                   #   FUSE mount point
 ├── src/
 │   ├── unionfs.h      # Shared header: state struct, constants, all declarations
 │   ├── main.c         # Entry point: arg validation, realpath, fuse_main
