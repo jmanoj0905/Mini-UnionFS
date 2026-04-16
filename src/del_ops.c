@@ -184,6 +184,34 @@ int unionfs_readlink(const char *path, char *buf, size_t size) {
     return 0;
 }
 
+int unionfs_rename(const char *from, const char *to, unsigned int flags) {
+    (void) flags;
+    struct mini_unionfs_state *data = UNIONFS_DATA;
+    char upper_from[MAX_PATH_LEN], upper_to[MAX_PATH_LEN];
+    char lower_from[MAX_PATH_LEN];
+    int ret;
+
+    snprintf(upper_from, MAX_PATH_LEN, "%s%s", data->upper_dir, from);
+    snprintf(upper_to, MAX_PATH_LEN, "%s%s", data->upper_dir, to);
+    snprintf(lower_from, MAX_PATH_LEN, "%s%s", data->lower_dir, from);
+
+    if (access(upper_from, F_OK) == 0) {
+        if (make_parent_dirs(upper_to) < 0) return -errno;
+        if (rename(upper_from, upper_to) == -1) return -errno;
+        return 0;
+    }
+
+    if (access(lower_from, F_OK) == 0) {
+        ret = cow_copy(from);
+        if (ret < 0) return ret;
+        if (make_parent_dirs(upper_to) < 0) return -errno;
+        if (rename(upper_from, upper_to) == -1) return -errno;
+        return 0;
+    }
+
+    return -ENOENT;
+}
+
 /* 3.6 — FUSE Dispatch Table */
 struct fuse_operations unionfs_oper = {
     .getattr    = unionfs_getattr,
@@ -203,4 +231,5 @@ struct fuse_operations unionfs_oper = {
     .statfs     = unionfs_statfs,
     .symlink    = unionfs_symlink,
     .readlink   = unionfs_readlink,
+    .rename     = unionfs_rename,
 };
