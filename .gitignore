@@ -3,6 +3,10 @@ unionfs_test_env/upper/
 unionfs_test_env/mnt/
 
 
+# Build artifacts
+*.o
+mini_unionfs
+
 # FUSE mount artifacts
 *.fuse_hidden*
 
@@ -25,3 +29,5 @@ CLAUDE.md
 # Project docs (internal only)
 UnionFS project.pdf
 team_split/
+
+docs

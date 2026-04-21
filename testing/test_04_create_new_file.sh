@@ -1,11 +1,11 @@
 #!/bin/bash
-# test_09_create_new_file.sh
+# test_04_create_new_file.sh
 # Tests: Creating a new file through the mount goes to upper layer only.
 # Covers: unionfs_create(), unionfs_write(), unionfs_release()
 
 source "$(dirname "$0")/lib.sh"
 
-header "TEST 05: New File Creation"
+header "TEST 04: New File Creation"
 info "New files created through mount must land in upper layer only"
 
 setup_env

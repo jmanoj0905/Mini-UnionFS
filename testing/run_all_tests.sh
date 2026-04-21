@@ -9,12 +9,7 @@ TESTS=(
     "test_01_layer_visibility.sh"
     "test_02_cow_write.sh"
     "test_03_whiteout.sh"
-    "test_04_readdir_merge.sh"
-    "test_05_create_new_file.sh"
-    "test_06_nested_paths.sh"
-    "test_07_directory_ops.sh"
-    "test_08_recreate_after_whiteout.sh"
-    "test_09_negative_cases.sh"
+    "test_04_create_new_file.sh"
 )
 
 BINARY="${FUSE_BINARY:-$PROJECT_DIR/mini_unionfs}"

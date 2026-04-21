@@ -1,2 +1,0 @@
-base_content_line1
-base_content_line2
