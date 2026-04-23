@@ -128,13 +128,3 @@ assert_cmd_fails() {
     fi
 }
 
-assert_mode() {
-    local path="$1" expected="$2" msg="$3"
-    local actual
-    actual=$(stat -c '%a' "$path" 2>/dev/null)
-    if [ "$actual" = "$expected" ]; then
-        pass "$msg"
-    else
-        fail "$msg  (expected mode $expected, got $actual)"
-    fi
-}
