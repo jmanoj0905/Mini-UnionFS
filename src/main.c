@@ -17,7 +17,9 @@ static void usage(const char *progname) {
 
 static int is_directory(const char *path) {
     struct stat st;
-    if (stat(path, &st) == -1) return 0;
+    if (stat(path, &st) == -1) {
+        return 0;
+    }
     return S_ISDIR(st.st_mode);
 }
 
@@ -29,6 +31,7 @@ int main(int argc, char *argv[]) {
 
     /* --- Allocate and populate global state --- */
     struct mini_unionfs_state *state = malloc(sizeof(*state));
+    //holds path for upper dir and lower dir
     if (!state) {
         perror("malloc");
         return 1;

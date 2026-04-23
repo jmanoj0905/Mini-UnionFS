@@ -16,17 +16,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <limits.h>
+#include <fcntl.h> //file controls
+#include <unistd.h> // Posix System calls // low level os ops
+#include <sys/stat.h> //File perms st.s
+#include <sys/types.h> //datatype for sys calls
+#include <dirent.h> //dir handling
+#include <limits.h> //path lim
 
 /* ---------- Constants ---------- */
 #define WH_PREFIX     ".wh."      /* whiteout file prefix */
-#define WH_PREFIX_LEN 4           /* strlen(".wh.")       */
-#define MAX_PATH_LEN  PATH_MAX    /* max path length      */
+#define WH_PREFIX_LEN 4
+#define MAX_PATH_LEN  PATH_MAX
 
 /* ---------- Global State ---------- */
 struct mini_unionfs_state {
